@@ -8,3 +8,10 @@ router_data_interface: eth-data
 
 router_private_subnet: 10.0.2.0/24
 router_data_subnet: 10.0.3.0/24
+
+# Temporary, explicitly-scoped exception: data-net has NO internet route
+# by design (see ADR 0001) — but that means a VM there can't `apt install`
+# anything live during initial provisioning. Flip this to true ONLY while
+# bootstrapping a data-net VM's packages, then back to false immediately
+# after. Never leave this true as standing config.
+router_temp_allow_data_egress: false

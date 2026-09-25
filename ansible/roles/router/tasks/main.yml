@@ -62,6 +62,29 @@
 # private-net/data-net themselves initiated is handled automatically by
 # ufw's connection tracking (established/related), no extra rule needed.
 
+# Toggled true/false via router_temp_allow_data_egress — see its comment
+# in defaults/main.yml. Both tasks run every time so the state always
+# matches the variable exactly: present when true, guaranteed absent
+# (delete: true) when false, so this can never accidentally stay open.
+- name: TEMP — allow data-net egress to internet for package installs
+  community.general.ufw:
+    rule: allow
+    route: true
+    interface_in: "{{ router_data_interface }}"
+    interface_out: "{{ router_public_interface }}"
+    comment: "TEMP provisioning-only — data-net -> internet"
+  when: router_temp_allow_data_egress | bool
+
+- name: TEMP — ensure data-net egress rule is removed when not in use
+  community.general.ufw:
+    rule: allow
+    route: true
+    interface_in: "{{ router_data_interface }}"
+    interface_out: "{{ router_public_interface }}"
+    delete: true
+  when: not (router_temp_allow_data_egress | bool)
+  failed_when: false # fine if it was already absent, nothing to delete
+
 - name: Ensure ufw is enabled
   community.general.ufw:
     state: enabled
