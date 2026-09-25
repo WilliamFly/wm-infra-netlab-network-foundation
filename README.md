@@ -1,9 +1,9 @@
 # wm-infra-netlab-network-foundation
 
-Phase 1 of [wm-infra-netlab](https://github.com/<your-username>/wm-infra-netlab):
+Phase 1 of [wm-infra-netlab](https://github.com/WilliamFly/wm-infra-netlab):
 the libvirt network layer. Terraform (libvirt provider) provisions the
 3-tier network topology described in
-[ADR 0001](https://github.com/<your-username>/wm-infra-netlab/blob/main/docs/decisions/0001-network-segmentation.md).
+[ADR 0001](https://github.com/WilliamFly/wm-infra-netlab/blob/main/docs/decisions/0001-network-segmentation.md).
 
 ## Current step: networks + router VM (no routing behavior yet)
 
@@ -84,7 +84,7 @@ the tiers yet.
 elsewhere:
 - **`harden-baseline`** — reusable host hardening (SSH, users, base ufw
   policy, fail2ban, unattended-upgrades). Lives in its own repo,
-  [wm-infra-netlab-harden-baseline](https://github.com/<your-username>/wm-infra-netlab-harden-baseline),
+  [wm-infra-netlab-harden-baseline](https://github.com/WilliamFly/wm-infra-netlab-harden-baseline),
   and is pulled in via `ansible-galaxy` (below) — not copied into this
   repo, so there's one canonical source shared across every project that
   needs it.
@@ -121,7 +121,49 @@ ansible-playbook playbook-router.yml
 
 ## Verifying routing works
 
-From inside a *test* VM you attach to `private-net` (none exists yet —
-this is proven once one does): it should be able to reach the internet
-through the router, and a VM on `data-net` should be reachable from
-`private-net` but never directly from your laptop or the internet.
+`ufw status verbose` / `iptables -t nat -L` confirm the *rules* are
+correct, but 0 packets through them proves nothing was ever actually
+routed. `test-vm.tf` provisions a throwaway VM on `private-net` only (no
+public-net NIC) to generate real traffic through the router and prove it.
+
+```bash
+# terraform.tfvars: set
+create_private_test_vm = true
+
+terraform apply
+```
+
+SSH to it **through the router** (it has no direct path from your host
+otherwise — this is a private-net-only VM, no public IP):
+```bash
+ssh -J netlab-admin@10.0.1.10 netlab-admin@10.0.2.50
+```
+
+From inside the test VM:
+```bash
+ping -c3 8.8.8.8               # raw IP connectivity through NAT
+curl -sI https://example.com   # full outbound HTTPS through NAT
+```
+
+Both working confirms the router is actually forwarding and NAT-ing
+`private-net` traffic out through `public-net` — not just holding
+correct-but-unexercised firewall rules.
+
+Back on the router, `sudo iptables -t nat -L POSTROUTING -n -v` should
+now show non-zero packet/byte counts on the `10.0.2.0/24` MASQUERADE rule.
+
+Note: your host machine can always reach `private-net`/`data-net`
+directly (libvirt creates the network bridge on the host itself,
+regardless of the network's isolation mode) — that's not a gap in the
+isolation, it's just how the hypervisor works. What the isolation
+actually guarantees is that nothing on `public-net` or the open internet
+can reach `private-net`/`data-net` without an explicit `ufw route allow`
+rule permitting it — which `ufw status verbose` already confirmed.
+
+**Tear down once confirmed:**
+```bash
+# terraform.tfvars: set back to
+create_private_test_vm = false
+
+terraform apply
+```

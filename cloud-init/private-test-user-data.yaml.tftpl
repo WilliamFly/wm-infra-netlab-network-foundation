@@ -1,0 +1,19 @@
+#cloud-config
+hostname: netlab-private-test
+manage_etc_hosts: true
+
+users:
+  - name: netlab-admin
+    groups: sudo
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+    lock_passwd: true
+
+ssh_pwauth: false
+package_update: true
+
+# Deliberately minimal — this VM exists only to prove NAT/forwarding
+# through the router works, then gets destroyed. No hardening applied
+# (no harden-baseline) — not worth it for a throwaway resource.

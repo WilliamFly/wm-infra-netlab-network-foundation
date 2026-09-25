@@ -1,0 +1,13 @@
+version: 2
+ethernets:
+  private-nic:
+    match:
+      macaddress: "${mac_private}"
+    set-name: eth0
+    addresses:
+      - 10.0.2.50/24
+    routes:
+      - to: default
+        via: 10.0.2.1
+    nameservers:
+      addresses: [1.1.1.1, 8.8.8.8]

@@ -25,3 +25,9 @@ variable "router_memory_mb" {
   type        = number
   default     = 1024
 }
+
+variable "create_private_test_vm" {
+  description = "Whether to create the throwaway test VM on private-net (proves NAT/forwarding, then gets destroyed)"
+  type        = bool
+  default     = false
+}
