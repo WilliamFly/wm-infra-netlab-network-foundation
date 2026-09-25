@@ -71,6 +71,16 @@ Inside the VM, confirm all three NICs got their correct static IP:
 ip -br addr
 ```
 
+**Before running Ansible against a freshly-created VM** (this one or any
+other in this project), wait for cloud-init to actually finish first:
+```bash
+cloud-init status --wait
+```
+Running Ansible too soon after `terraform apply` causes a race for the
+dpkg lock between cloud-init's own package installs and Ansible's —
+`cloud-init status --wait` blocks until it's genuinely done, not just
+"still running."
+
 ## Status
 
 Networking, NAT, and inter-tier routing are all live and verified — see

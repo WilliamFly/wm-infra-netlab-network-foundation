@@ -23,6 +23,10 @@ resource "libvirt_volume" "router_disk" {
   pool           = var.storage_pool
   base_volume_id = libvirt_volume.ubuntu_base.id
   format         = "qcow2"
+  # Base cloud image defaults to ~2.4GB — smaller than app/db VMs need,
+  # but still worth headroom for logs (fail2ban, journald, apt cache)
+  # accumulating over the router's lifetime.
+  size = var.router_disk_size_gb * 1024 * 1024 * 1024
 }
 
 resource "libvirt_cloudinit_disk" "router" {

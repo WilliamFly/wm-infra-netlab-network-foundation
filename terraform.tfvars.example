@@ -8,4 +8,5 @@ ssh_public_key  = "ssh-ed25519 AAAA...your-key-here... comment"
 # storage_pool     = "default"
 # router_vcpu      = 1
 # router_memory_mb = 1024
+# router_disk_size_gb = 10
 # create_private_test_vm = false
