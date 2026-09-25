@@ -49,8 +49,8 @@ terraform apply
 | Hostname | `netlab-router` |
 | Admin user | `netlab-admin` (SSH key only, password login disabled) |
 | public-net IP | `10.0.1.10` |
-| private-net IP | `10.0.2.1` (gateway for private-net) |
-| data-net IP | `10.0.3.1` (gateway for data-net) |
+| private-net IP | `10.0.2.254` (gateway for private-net) |
+| data-net IP | `10.0.3.254` (gateway for data-net) |
 | Specs | 1 vCPU / 1GB RAM |
 
 ## Verifying
