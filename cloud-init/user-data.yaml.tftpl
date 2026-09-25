@@ -1,0 +1,22 @@
+#cloud-config
+hostname: netlab-router
+manage_etc_hosts: true
+
+users:
+  - name: netlab-admin
+    groups: sudo
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+    lock_passwd: true
+
+ssh_pwauth: false
+
+package_update: true
+package_upgrade: true
+
+# IP forwarding + nftables rules are applied later by the harden-baseline
+# extension (Ansible) — this cloud-init is deliberately just "get a
+# reachable, SSH-only VM with the right identity," nothing router-specific
+# yet.

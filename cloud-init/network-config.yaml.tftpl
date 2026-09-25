@@ -1,0 +1,27 @@
+version: 2
+ethernets:
+  public-nic:
+    match:
+      macaddress: "${mac_public}"
+    set-name: eth-public
+    addresses:
+      - 10.0.1.10/24
+    routes:
+      - to: default
+        via: 10.0.1.1
+    nameservers:
+      addresses: [1.1.1.1, 8.8.8.8]
+
+  private-nic:
+    match:
+      macaddress: "${mac_private}"
+    set-name: eth-private
+    addresses:
+      - 10.0.2.1/24
+
+  data-nic:
+    match:
+      macaddress: "${mac_data}"
+    set-name: eth-data
+    addresses:
+      - 10.0.3.1/24

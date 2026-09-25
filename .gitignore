@@ -1,0 +1,48 @@
+# --- Secrets & credentials (never commit) ---
+*.tfvars
+!*.tfvars.example
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+!*.pub.key
+vault_pass*
+.vault-password
+
+# --- Terraform ---
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+crash.log
+crash.*.log
+
+# --- Ansible ---
+*.retry
+inventory/host_vars/*/vault.yml
+!inventory/host_vars/*/vault.yml.example
+
+# --- Packer ---
+packer_cache/
+*.pkrvars.hcl
+!*.pkrvars.hcl.example
+
+# --- SSH keys generated for lab VMs ---
+id_rsa
+id_ed25519
+*_key
+!*_key.example
+
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# --- Logs / local scratch ---
+*.log
+.tmp/
+scratch/
