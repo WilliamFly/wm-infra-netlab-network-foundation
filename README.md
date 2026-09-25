@@ -77,3 +77,51 @@ IP forwarding + nftables NAT/routing rules, applied via the
 `harden-baseline` Ansible role extended for router duty. Until that's
 done, this VM can be SSH'd into but doesn't actually route traffic between
 the tiers yet.
+
+## Router configuration (Ansible)
+
+`ansible/` contains one role local to this repo, plus one pulled in from
+elsewhere:
+- **`harden-baseline`** — reusable host hardening (SSH, users, base ufw
+  policy, fail2ban, unattended-upgrades). Lives in its own repo,
+  [wm-infra-netlab-harden-baseline](https://github.com/<your-username>/wm-infra-netlab-harden-baseline),
+  and is pulled in via `ansible-galaxy` (below) — not copied into this
+  repo, so there's one canonical source shared across every project that
+  needs it.
+- **`router`** (in this repo, `ansible/roles/router/`) — depends on
+  `harden-baseline` (see its `meta/main.yml`), adds IP forwarding, NAT
+  masquerade, and `ufw route` rules controlling exactly which tiers can
+  forward traffic to which.
+
+Uses **ufw's routing support** (`ufw route allow`, NAT via
+`/etc/ufw/before.rules`) rather than raw nftables — consistent with
+`harden-baseline` already standardizing on ufw; running two firewall
+tools on one box would conflict, since ufw itself sits on top of
+iptables/nftables.
+
+```bash
+cd ansible
+ansible-galaxy install -r requirements.yml
+# ^ this one command fetches BOTH the harden-baseline role (into
+#   roles/harden-baseline/, gitignored — always fetched fresh) AND the
+#   community.general / ansible.posix collections the roles need.
+ansible-playbook playbook-router.yml
+```
+
+**What the router role actually does:**
+- Enables `net.ipv4.ip_forward` persistently
+- Sets ufw's default forward policy to `DROP`
+- Adds NAT masquerade so `private-net`/`data-net` traffic exits via
+  `public-net` looking like it came from the router
+- Allows forwarding `private-net → public-net` (internet access) and
+  `private-net → data-net` (app reaching db)
+- **No** rule allows `data-net` or `public-net` as a forwarding source —
+  the default-DROP policy blocks those automatically, which is what
+  actually enforces ADR 0001's isolation guarantee
+
+## Verifying routing works
+
+From inside a *test* VM you attach to `private-net` (none exists yet —
+this is proven once one does): it should be able to reach the internet
+through the router, and a VM on `data-net` should be reachable from
+`private-net` but never directly from your laptop or the internet.

@@ -1,0 +1,11 @@
+---
+- name: Configure router VM — hardening + forwarding/NAT/routing
+  hosts: router
+  become: true
+
+  roles:
+    - router
+    # harden-baseline runs automatically first, as a dependency of the
+    # router role (see roles/router/meta/main.yml) — not listed here
+    # directly, so there's one obvious place (router's meta) declaring
+    # that relationship.

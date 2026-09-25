@@ -1,0 +1,12 @@
+---
+# Vars for harden-baseline, applied to the router VM via the role
+# dependency in roles/router/meta/main.yml. The admin user/key here must
+# match what cloud-init already created (see ../cloud-init/user-data.yaml.tftpl)
+# since that's how Ansible connects in the first place.
+
+harden_admin_user: netlab-admin
+harden_admin_ssh_keys:
+  - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMr+71BAER8MDi7ApJ/OGvIeglgRWj4aKWw60f+5+TEq devops second key"
+
+harden_ufw_allowed_ports:
+  - { port: "22", proto: "tcp", comment: "SSH" }

@@ -1,0 +1,10 @@
+---
+roles:
+  - src: https://github.com/WilliamFly/wm-infra-netlab-harden-baseline
+    name: harden-baseline
+    # No `version:` pin yet — tracks the default branch until that repo
+    # tags a release. Add `version: v1.0.0` (or similar) once it does.
+
+collections:
+  - name: community.general
+  - name: ansible.posix

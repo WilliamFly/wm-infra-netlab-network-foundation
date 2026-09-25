@@ -1,0 +1,67 @@
+---
+# Runs AFTER harden-baseline (via the role dependency in meta/main.yml),
+# so ufw is already installed and enabled with default-deny-incoming /
+# allow-outgoing before any of this applies.
+
+- name: Enable IPv4 forwarding persistently
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-router-forwarding.conf
+    content: |
+      # Managed by Ansible — router role. Required for this VM to route
+      # traffic between public/private/data tiers.
+      net.ipv4.ip_forward = 1
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload sysctl
+
+- name: Ensure ufw forward policy defaults to DROP
+  ansible.builtin.lineinfile:
+    path: /etc/default/ufw
+    regexp: '^DEFAULT_FORWARD_POLICY='
+    line: 'DEFAULT_FORWARD_POLICY="DROP"'
+  notify: Reload ufw
+
+# Explicit "ufw route allow" rules below are still honoured with the
+# default forward policy set to DROP — they're what make specific,
+# intentional forwarding paths work while everything else stays blocked.
+- name: Insert NAT masquerade rules into ufw before.rules
+  ansible.builtin.blockinfile:
+    path: /etc/ufw/before.rules
+    insertbefore: BOF
+    marker: "# {mark} ANSIBLE MANAGED BLOCK — router NAT masquerade"
+    block: |
+      *nat
+      :POSTROUTING ACCEPT [0:0]
+      -A POSTROUTING -s {{ router_private_subnet }} -o {{ router_public_interface }} -j MASQUERADE
+      -A POSTROUTING -s {{ router_data_subnet }} -o {{ router_public_interface }} -j MASQUERADE
+      COMMIT
+  notify: Reload ufw
+
+- name: Allow forwarding — private-net to internet (NAT)
+  community.general.ufw:
+    rule: allow
+    route: true
+    interface_in: "{{ router_private_interface }}"
+    interface_out: "{{ router_public_interface }}"
+    comment: "private-net -> internet"
+
+- name: Allow forwarding — private-net to data-net (app to db)
+  community.general.ufw:
+    rule: allow
+    route: true
+    interface_in: "{{ router_private_interface }}"
+    interface_out: "{{ router_data_interface }}"
+    comment: "private-net -> data-net"
+
+# Deliberately NO rules with data-net or public-net as the incoming
+# interface: the DEFAULT_FORWARD_POLICY=DROP set above blocks everything
+# not explicitly allowed. This is what actually enforces the isolation
+# from ADR 0001 — data-net can't initiate anywhere, public-net can't
+# reach private-net or data-net directly. Return traffic for connections
+# private-net/data-net themselves initiated is handled automatically by
+# ufw's connection tracking (established/related), no extra rule needed.
+
+- name: Ensure ufw is enabled
+  community.general.ufw:
+    state: enabled

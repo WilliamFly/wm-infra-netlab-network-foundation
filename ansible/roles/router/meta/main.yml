@@ -1,0 +1,23 @@
+---
+galaxy_info:
+  role_name: router
+  author: William Mucha
+  description: >
+    IP forwarding + NAT + inter-tier ufw routing rules for the netlab
+    router VM. Depends on harden-baseline for the underlying host
+    hardening (SSH, users, base firewall, updates, fail2ban) — this role
+    only adds the router-specific behaviour on top.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+  galaxy_tags:
+    - networking
+    - firewall
+    - nat
+    - router
+
+dependencies:
+  - role: harden-baseline

@@ -24,6 +24,11 @@ crash.*.log
 inventory/host_vars/*/vault.yml
 !inventory/host_vars/*/vault.yml.example
 
+# harden-baseline is pulled in via `ansible-galaxy install -r requirements.yml`
+# from its own repo (wm-infra-netlab-harden-baseline) — fetched, not
+# committed here. router/ stays, since it's original to this repo.
+ansible/roles/harden-baseline/
+
 # --- Packer ---
 packer_cache/
 *.pkrvars.hcl

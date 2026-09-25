@@ -1,0 +1,10 @@
+---
+# router — extends harden-baseline (see meta/main.yml) with IP forwarding,
+# NAT, and inter-tier firewall rules specific to this VM's job.
+
+router_public_interface: eth-public
+router_private_interface: eth-private
+router_data_interface: eth-data
+
+router_private_subnet: 10.0.2.0/24
+router_data_subnet: 10.0.3.0/24
