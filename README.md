@@ -71,12 +71,11 @@ Inside the VM, confirm all three NICs got their correct static IP:
 ip -br addr
 ```
 
-## Next step
+## Status
 
-IP forwarding + nftables NAT/routing rules, applied via the
-`harden-baseline` Ansible role extended for router duty. Until that's
-done, this VM can be SSH'd into but doesn't actually route traffic between
-the tiers yet.
+Networking, NAT, and inter-tier routing are all live and verified — see
+"Verifying routing works" below for how that was proven with real
+traffic. Nothing here is still pending from the original build.
 
 ## Router configuration (Ansible)
 
@@ -167,3 +166,26 @@ create_private_test_vm = false
 
 terraform apply
 ```
+
+## Provisioning isolated-tier VMs (data-net)
+
+`data-net` has no route to the internet by design (ADR 0001) — which
+means anything on it (e.g. `wm-infra-netlab-db`) can't live-install
+packages via cloud-init on first boot. The router role includes a
+toggle for exactly this situation:
+
+```bash
+# temporarily open data-net -> internet
+ansible-playbook playbook-router.yml -e router_temp_allow_data_egress=true
+
+# ...finish provisioning the data-net VM by hand...
+
+# close it again — always run this after
+ansible-playbook playbook-router.yml -e router_temp_allow_data_egress=false
+```
+
+Both directions are idempotent — the rule is guaranteed present when
+`true` and guaranteed absent when `false`. See
+[ADR 0005](https://github.com/WilliamFly/wm-infra-netlab/blob/main/docs/decisions/0005-isolated-tier-provisioning.md)
+for the full reasoning and the planned real fix (Packer-baked images,
+which would remove the need for this toggle entirely).
